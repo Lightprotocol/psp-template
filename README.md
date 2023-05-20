@@ -1,1 +1,1 @@
-# psp-template
+# {{project-name}}

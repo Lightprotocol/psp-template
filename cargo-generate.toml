@@ -1,0 +1,15 @@
+[template]
+cargo_generate_version = ">=0.18.2"
+
+[placeholders.circom-name]
+type = "string"
+prompt = "Name of the Circom circuit (snake_case)"
+
+[placeholders.rust-name]
+type = "string"
+prompt = "Name of the Rust crate (snake_case)"
+
+[placeholders.program-id]
+type = "string"
+prompt = "Solana program ID"
+default = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
