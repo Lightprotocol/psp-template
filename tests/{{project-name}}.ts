@@ -35,7 +35,7 @@ var POSEIDON;
 
 const RPC_URL = "http://127.0.0.1:8899";
 
-describe("{}", () => {
+describe("Test {{project-name}}", () => {
   process.env.ANCHOR_PROVIDER_URL = RPC_URL;
   process.env.ANCHOR_WALLET = process.env.HOME + "/.config/solana/id.json";
 
