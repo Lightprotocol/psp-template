@@ -1,14 +1,16 @@
+use crate::verifying_key::VERIFYINGKEY;
+use crate::LightInstructionFirst;
+use crate::LightInstructionThird;
 use anchor_lang::prelude::*;
-use solana_program::sysvar;
-
 use light_macros::pubkey;
+use light_verifier_sdk::light_transaction::Amounts;
+use light_verifier_sdk::light_transaction::Proof;
+use light_verifier_sdk::light_transaction::TransactionInput;
 use light_verifier_sdk::light_transaction::VERIFIER_STATE_SEED;
 use light_verifier_sdk::{
     light_app_transaction::AppTransaction,
     light_transaction::{Config, Transaction},
 };
-
-use crate::{verifying_key::VERIFYINGKEY, PspInstructionFirst, PspInstructionThird};
 
 #[derive(Clone)]
 pub struct TransactionsConfig;
@@ -21,16 +23,20 @@ impl Config for TransactionsConfig {
     const ID: Pubkey = pubkey!("{{program-id}}");
 }
 
-pub fn process_psp_instruction_first<'a, 'b, 'c, 'info>(
-    ctx: Context<'a, 'b, 'c, 'info, PspInstructionFirst<'info>>,
-    proof_a: &'a [u8; 64],
-    proof_b: &'a [u8; 128],
-    proof_c: &'a [u8; 64],
-    public_amount_spl: &'a [u8; 32],
+pub fn process_psp_instruction_first<
+    'a,
+    'b,
+    'c,
+    'info,
+    const NR_CHECKED_INPUTS: usize,
+    const NR_PUBLIC_INPUTS: usize,
+>(
+    ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, NR_CHECKED_INPUTS>>,
+    proof: &'a Proof,
+    public_amount: &'a Amounts,
     input_nullifier: &'a [[u8; 32]; 4],
     output_commitment: &'a [[u8; 32]; 4],
-    public_amount_sol: &'a [u8; 32],
-    checked_public_inputs: &'a Vec<Vec<u8>>,
+    checked_public_inputs: &'a [[u8; 32]; NR_CHECKED_INPUTS],
     encrypted_utxos: &'a Vec<u8>,
     pool_type: &'a [u8; 32],
     root_index: &'a u64,
@@ -40,24 +46,22 @@ pub fn process_psp_instruction_first<'a, 'b, 'c, 'info>(
         [output_commitment[0], output_commitment[1]],
         [output_commitment[2], output_commitment[3]],
     ];
-    let tx = Transaction::<2, 4, TransactionsConfig>::new(
-        None,
-        None,
-        proof_a,
-        proof_b,
-        proof_c,
-        public_amount_spl,
-        public_amount_sol,
-        checked_public_inputs,
-        input_nullifier,
-        &output_commitment,
+    let input = TransactionInput {
+        message: None,
+        proof,
+        public_amount,
+        nullifiers: input_nullifier,
+        leaves: &output_commitment,
         encrypted_utxos,
-        *relayer_fee,
-        (*root_index).try_into().unwrap(),
-        pool_type, //pool_type
-        None,
-        &VERIFYINGKEY,
-    );
+        relayer_fee: *relayer_fee,
+        merkle_root_index: (*root_index).try_into().unwrap(),
+        pool_type,
+        checked_public_inputs,
+        accounts: None,
+        verifyingkey: &VERIFYINGKEY,
+    };
+    let tx =
+        Transaction::<NR_CHECKED_INPUTS, 2, 4, NR_PUBLIC_INPUTS, TransactionsConfig>::new(input);
     ctx.accounts.verifier_state.set_inner(tx.into());
     ctx.accounts.verifier_state.signer = *ctx.accounts.signing_address.key;
     Ok(())
@@ -135,7 +139,7 @@ pub fn verify_programm_proof<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
         b: inputs[64..192].try_into().unwrap(),
         c: inputs[192..256].try_into().unwrap(),
     };
-    let app_verifier = AppTransaction::<NR_CHECKED_INPUTS, TransactionsConfig>::new(
+    let mut app_verifier = AppTransaction::<NR_CHECKED_INPUTS, TransactionsConfig>::new(
         &proof_app,
         &ctx.accounts.verifier_state.checked_public_inputs,
         &VERIFYINGKEY,

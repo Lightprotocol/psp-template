@@ -8,9 +8,6 @@ pub use processor::*;
 pub mod verifying_key;
 pub use verifying_key::*;
 
-use crate::processor::{
-    process_psp_instruction_first, process_psp_instruction_third,
-};
 
 declare_id!("{{program-id}}");
 
@@ -19,12 +16,10 @@ pub const PROGRAM_ID: &str = "{{program-id}}";
 
 #[program]
 pub mod {{rust-name}} {
-    use super::*;
-
-    use anchor_lang::solana_program::keccak::hash;
     use light_verifier_sdk::light_transaction::{Amounts, Proof};
     use solana_program::sysvar;
 
+    use super::*;
 
     /// This instruction is the first step of a shieled transaction.
     /// It creates and initializes a verifier state account to save state of a verification during
@@ -32,7 +27,7 @@ pub mod {{rust-name}} {
     /// such as leaves, amounts, recipients, nullifiers, etc. to execute the protocol logic
     /// in the last transaction after successful ZKP verification. light_verifier_sdk::light_instruction::LightInstruction2
     pub fn light_instruction_first<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, 3>>,
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
         let inputs_des: InstructionDataLightInstructionFirst =
@@ -57,7 +52,7 @@ pub mod {{rust-name}} {
             // inputs_des.current_slot.to_vec(),
             [0u8; 32],
         ];
-        process_transfer_4_ins_4_outs_4_checked_first::<3, 17>(
+        process_psp_instruction_first::<NR_CHECKED_INPUTS, 17>(
             ctx,
             &proof,
             &public_amount,
@@ -72,7 +67,7 @@ pub mod {{rust-name}} {
     }
 
     pub fn light_instruction_second<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, LightInstructionSecond<'info, 3>>,
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionSecond<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
         inputs.chunks(32).enumerate().for_each(|(i, input)| {
@@ -87,7 +82,7 @@ pub mod {{rust-name}} {
     /// The proof is verified with the parameters saved in the first transaction.
     /// At successful verification protocol logic is executed.
     pub fn light_instruction_third<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, 3>>,
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
         let current_slot = <Clock as sysvar::Sysvar>::get()?.slot;
@@ -117,10 +112,9 @@ pub mod {{rust-name}} {
         cpi_verifier_two(&ctx, &inputs)
     }
 
-    /// Close the verifier state to reclaim rent in case the proof does not
-    /// verify.
+    /// Close the verifier state to reclaim rent in case the proofdata is wrong and does not verify.
     pub fn close_verifier_state<'a, 'b, 'c, 'info>(
-        _ctx: Context<'a, 'b, 'c, 'info, CloseVerifierState<'info>>,
+        _ctx: Context<'a, 'b, 'c, 'info, CloseVerifierState<'info, NR_CHECKED_INPUTS>>,
     ) -> Result<()> {
         Ok(())
     }
