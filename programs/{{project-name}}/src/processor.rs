@@ -63,45 +63,15 @@ pub fn process_psp_instruction_first<'a, 'b, 'c, 'info>(
     Ok(())
 }
 
-pub fn process_psp_instruction_third<'a, 'b, 'c, 'info>(
-    ctx: Context<'a, 'b, 'c, 'info, PspInstructionThird<'info>>,
-    proof_a_app: &'a [u8; 64],
-    proof_b_app: &'a [u8; 128],
-    proof_c_app: &'a [u8; 64],
-    proof_a_verifier: &'a [u8; 64],
-    proof_b_verifier: &'a [u8; 128],
-    proof_c_verifier: &'a [u8; 64],
+pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
+    ctx: &'a Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
+    inputs: &'a Vec<u8>,
 ) -> Result<()> {
-    // enforce current slot public input
-    let current_slot = <Clock as sysvar::Sysvar>::get()?.slot;
-    msg!(
-        "{} > {}",
-        current_slot,
-        u64::from_be_bytes(
-            ctx.accounts.verifier_state.checked_public_inputs[2][24..32]
-                .try_into()
-                .unwrap(),
-        )
-    );
-    if current_slot
-        < u64::from_be_bytes(
-            ctx.accounts.verifier_state.checked_public_inputs[2][24..32]
-                .try_into()
-                .unwrap(),
-        )
-    {
-        panic!("Escrow still locked");
-    }
-    // verify app proof
-    let mut app_verifier = AppTransaction::<TransactionsConfig>::new(
-        proof_a_app,
-        proof_b_app,
-        proof_c_app,
-        ctx.accounts.verifier_state.checked_public_inputs.clone(),
-        &VERIFYINGKEY,
-    );
-
-    app_verifier.verify()?;
+    let proof_verifier = Proof {
+        a: inputs[256..256 + 64].try_into().unwrap(),
+        b: inputs[256 + 64..256 + 192].try_into().unwrap(),
+        c: inputs[256 + 192..256 + 256].try_into().unwrap(),
+    };
 
     let (_, bump) = anchor_lang::prelude::Pubkey::find_program_address(
         &[
@@ -112,52 +82,64 @@ pub fn process_psp_instruction_third<'a, 'b, 'c, 'info>(
     );
 
     let bump = &[bump];
-    let accounts = verifier_program_two::cpi::accounts::LightInstruction {
-        verifier_state: ctx.accounts.verifier_state.to_account_info().clone(),
-        signing_address: ctx.accounts.signing_address.to_account_info().clone(),
-        authority: ctx.accounts.authority.to_account_info().clone(),
-        system_program: ctx.accounts.system_program.to_account_info().clone(),
-        registered_verifier_pda: ctx
-            .accounts
-            .registered_verifier_pda
-            .to_account_info()
-            .clone(),
-        program_merkle_tree: ctx.accounts.program_merkle_tree.to_account_info().clone(),
-        transaction_merkle_tree: ctx
-            .accounts
-            .transaction_merkle_tree
-            .to_account_info()
-            .clone(),
-        token_program: ctx.accounts.token_program.to_account_info().clone(),
-        sender_spl: ctx.accounts.sender_spl.to_account_info().clone(),
-        recipient_spl: ctx.accounts.recipient_spl.to_account_info().clone(),
-        sender_sol: ctx.accounts.sender_sol.to_account_info().clone(),
-        recipient_sol: ctx.accounts.recipient_sol.to_account_info().clone(),
-        // relayer recipient and escrow will never be used in the same transaction
-        relayer_recipient_sol: ctx.accounts.relayer_recipient_sol.to_account_info().clone(),
-        token_authority: ctx.accounts.token_authority.to_account_info().clone(),
-        log_wrapper: ctx.accounts.log_wrapper.to_account_info(),
-    };
-
     let seed = &ctx.accounts.signing_address.key().to_bytes();
     let domain_separation_seed = VERIFIER_STATE_SEED;
-    let cpi_seed = &[seed, domain_separation_seed, bump];
+    let cpi_seed = &[seed, domain_separation_seed, &bump[..]];
     let final_seed = &[&cpi_seed[..]];
+
+    let accounts: verifier_program_two::cpi::accounts::LightInstruction<'info> =
+        verifier_program_two::cpi::accounts::LightInstruction {
+            verifier_state: ctx.accounts.verifier_state.to_account_info(),
+            signing_address: ctx.accounts.signing_address.to_account_info(),
+            authority: ctx.accounts.authority.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+            registered_verifier_pda: ctx.accounts.registered_verifier_pda.to_account_info(),
+            program_merkle_tree: ctx.accounts.program_merkle_tree.to_account_info(),
+            transaction_merkle_tree: ctx.accounts.transaction_merkle_tree.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+            sender_spl: ctx.accounts.sender_spl.to_account_info(),
+            recipient_spl: ctx.accounts.recipient_spl.to_account_info(),
+            sender_sol: ctx.accounts.sender_sol.to_account_info(),
+            recipient_sol: ctx.accounts.recipient_sol.to_account_info(),
+            // relayer recipient and escrow will never be used in the same transaction
+            relayer_recipient_sol: ctx.accounts.relayer_recipient_sol.to_account_info(),
+            token_authority: ctx.accounts.token_authority.to_account_info(),
+            log_wrapper: ctx.accounts.log_wrapper.to_account_info(),
+        };
+
     let mut cpi_ctx = CpiContext::new_with_signer(
-        ctx.accounts.verifier_program.to_account_info().clone(),
+        ctx.accounts.verifier_program.to_account_info(),
         accounts,
-        final_seed,
+        &final_seed[..],
     );
     cpi_ctx = cpi_ctx.with_remaining_accounts(ctx.remaining_accounts.to_vec());
 
     verifier_program_two::cpi::shielded_transfer_inputs(
         cpi_ctx,
-        *proof_a_verifier,
-        *proof_b_verifier,
-        *proof_c_verifier,
+        proof_verifier.a,
+        proof_verifier.b,
+        proof_verifier.c,
         <Vec<u8> as TryInto<[u8; 32]>>::try_into(
             ctx.accounts.verifier_state.checked_public_inputs[1].to_vec(),
         )
         .unwrap(),
     )
+}
+
+pub fn verify_programm_proof<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
+    ctx: &'a Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
+    inputs: &'a Vec<u8>,
+) -> Result<()> {
+    let proof_app = Proof {
+        a: inputs[0..64].try_into().unwrap(),
+        b: inputs[64..192].try_into().unwrap(),
+        c: inputs[192..256].try_into().unwrap(),
+    };
+    let app_verifier = AppTransaction::<NR_CHECKED_INPUTS, TransactionsConfig>::new(
+        &proof_app,
+        &ctx.accounts.verifier_state.checked_public_inputs,
+        &VERIFYINGKEY,
+    );
+
+    app_verifier.verify()
 }

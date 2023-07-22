@@ -52,14 +52,19 @@ describe("Test {{project-name}}", () => {
     const wallet = Keypair.generate();
     await airdropSol({
       provider,
-      amount: 10_000_000_000,
+      lamports: 10_000_000_000,
       recipientPublicKey: wallet.publicKey,
     });
 
-    let relayer = new TestRelayer(wallet.publicKey, LOOK_UP_TABLE, wallet.publicKey, new BN(100000))
+    let relayer = new TestRelayer({
+      relayerPubkey: wallet.publicKey,
+      relayerRecipientSol:  wallet.publicKey,
+      relayerFee: new BN(100000),
+      payer: wallet
+    });
     await airdropSol({
       provider,
-      amount: 1_000_000_000,
+      lamports: 1_000_000_000,
       recipientPublicKey: Transaction.getRegisteredVerifierPda(
         TRANSACTION_MERKLE_TREE_KEY,
         verifierProgramStorageProgramId
@@ -67,7 +72,7 @@ describe("Test {{project-name}}", () => {
     });
     await airdropSol({
       provider,
-      amount: 1_000_000_000,
+      lamports: 1_000_000_000,
       recipientPublicKey: Transaction.getRegisteredVerifierPda(
         TRANSACTION_MERKLE_TREE_KEY,
         verifierProgramTwoProgramId
