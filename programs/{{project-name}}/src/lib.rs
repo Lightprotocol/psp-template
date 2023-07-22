@@ -8,9 +8,6 @@ pub use processor::*;
 pub mod verifying_key;
 pub use verifying_key::*;
 
-use crate::processor::{
-    process_psp_instruction_first, process_psp_instruction_third,
-};
 
 declare_id!("{{program-id}}");
 
@@ -19,43 +16,48 @@ pub const PROGRAM_ID: &str = "{{program-id}}";
 
 #[program]
 pub mod {{rust-name}} {
+    use light_verifier_sdk::light_transaction::{Amounts, Proof};
+    use solana_program::sysvar;
+
     use super::*;
 
-    /// The first step of a shieled transaction. It creates and initializes a
-    /// verifier state account to save state of a verification during
-    /// computation verifying the zero-knowledge proof (ZKP). Additionally, it
-    /// stores other data such as leaves, amounts, recipients, nullifiers, etc.
-    /// to execute the protocol logic in the last transaction after successful
-    /// ZKP verification.
-    pub fn psp_instruction_first<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, PspInstructionFirst<'info>>,
+    /// This instruction is the first step of a shieled transaction.
+    /// It creates and initializes a verifier state account to save state of a verification during
+    /// computation verifying the zero-knowledge proof (ZKP). Additionally, it stores other data
+    /// such as leaves, amounts, recipients, nullifiers, etc. to execute the protocol logic
+    /// in the last transaction after successful ZKP verification. light_verifier_sdk::light_instruction::LightInstruction2
+    pub fn light_instruction_first<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
-        let inputs_des: InstructionDataPspInstructionFirst =
-            InstructionDataPspInstructionFirst::try_deserialize_unchecked(
-                &mut inputs.as_slice(),
+        let inputs_des: InstructionDataLightInstructionFirst =
+            InstructionDataLightInstructionFirst::try_deserialize_unchecked(
+                &mut [vec![0u8; 8], inputs].concat().as_slice(),
             )?;
-        let proof_a = [0u8; 64];
-        let proof_b = [0u8; 128];
-        let proof_c = [0u8; 64];
+        let proof = Proof {
+            a: [0u8; 64],
+            b: [0u8; 128],
+            c: [0u8; 64],
+        };
+        let public_amount = Amounts {
+            sol: inputs_des.public_amount_sol,
+            spl: inputs_des.public_amount_spl,
+        };
         let pool_type = [0u8; 32];
-        let checked_inputs = vec![
-            [
-                vec![0u8],
-                hash(&ctx.program_id.to_bytes()).try_to_vec()?[1..].to_vec(),
-            ]
-            .concat(),
-            inputs_des.transaction_hash.to_vec(),
+        let mut program_id_hash = hash(&ctx.program_id.to_bytes()).to_bytes();
+        program_id_hash[0] = 0;
+        let checked_inputs = [
+            program_id_hash,
+            inputs_des.transaction_hash,
+            // inputs_des.current_slot.to_vec(),
+            [0u8; 32],
         ];
-        process_psp_instruction_first(
+        process_psp_instruction_first::<NR_CHECKED_INPUTS, 17>(
             ctx,
-            &proof_a,
-            &proof_b,
-            &proof_c,
-            &inputs_des.public_amount_spl,
+            &proof,
+            &public_amount,
             &inputs_des.input_nullifier,
             &inputs_des.output_commitment,
-            &inputs_des.public_amount_sol,
             &checked_inputs,
             &inputs_des.encrypted_utxos,
             &pool_type,
@@ -64,49 +66,55 @@ pub mod {{rust-name}} {
         )
     }
 
-    pub fn psp_instruction_second<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, PspInstructionSecond<'info>>,
+    pub fn light_instruction_second<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionSecond<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
-        // cut off discriminator
-        let vec = &inputs[8..];
-        let _ = vec
-            .chunks(32)
-            .map(|input| {
-                ctx.accounts
-                    .verifier_state
-                    .checked_public_inputs
-                    .push(input.to_vec())
-            })
-            .collect::<Vec<_>>();
+        inputs.chunks(32).enumerate().for_each(|(i, input)| {
+            let mut arr = [0u8; 32];
+            arr.copy_from_slice(input);
+            ctx.accounts.verifier_state.checked_public_inputs[2 + i] = arr
+        });
         Ok(())
     }
 
-    /// The third and final step of a shielded transaction. The proof is
-    /// verified with the parameters saved in the first transaction. At
-    /// successful verification, protocol logic is executed.
-    pub fn psp_instruction_third<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, PspInstructionThird<'info>>,
+    /// This instruction is the second step of a shieled transaction.
+    /// The proof is verified with the parameters saved in the first transaction.
+    /// At successful verification protocol logic is executed.
+    pub fn light_instruction_third<'a, 'b, 'c, 'info>(
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
-        let inputs_des: InstructionDataPspInstructionThird =
-            InstructionDataPspInstructionThird::try_deserialize(&mut inputs.as_slice())?;
-
-        process_psp_instruction_third(
-            ctx,
-            &inputs_des.proof_a_app,
-            &inputs_des.proof_b_app,
-            &inputs_des.proof_c_app,
-            &inputs_des.proof_a,
-            &inputs_des.proof_b,
-            &inputs_des.proof_c,
-        )
+        let current_slot = <Clock as sysvar::Sysvar>::get()?.slot;
+        msg!(
+            "{} > {}",
+            current_slot,
+            u64::from_be_bytes(
+                ctx.accounts.verifier_state.checked_public_inputs[2][24..32]
+                    .try_into()
+                    .unwrap(),
+            )
+        );
+        if current_slot
+            < u64::from_be_bytes(
+                ctx.accounts.verifier_state.checked_public_inputs[2][24..32]
+                    .try_into()
+                    .unwrap(),
+            )
+        {
+            panic!("Escrow still locked");
+        }
+        msg!(
+            "checked inputs {:?}",
+            ctx.accounts.verifier_state.checked_public_inputs
+        );
+        verify_programm_proof(&ctx, &inputs)?;
+        cpi_verifier_two(&ctx, &inputs)
     }
 
-    /// Close the verifier state to reclaim rent in case the proof does not
-    /// verify.
+    /// Close the verifier state to reclaim rent in case the proofdata is wrong and does not verify.
     pub fn close_verifier_state<'a, 'b, 'c, 'info>(
-        _ctx: Context<'a, 'b, 'c, 'info, CloseVerifierState<'info>>,
+        _ctx: Context<'a, 'b, 'c, 'info, CloseVerifierState<'info, NR_CHECKED_INPUTS>>,
     ) -> Result<()> {
         Ok(())
     }
