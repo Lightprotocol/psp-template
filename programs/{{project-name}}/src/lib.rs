@@ -46,20 +46,18 @@ pub mod {{rust-name}} {
         let pool_type = [0u8; 32];
         let mut program_id_hash = hash(&ctx.program_id.to_bytes()).to_bytes();
         program_id_hash[0] = 0;
-        let mut checked_inputs = [
-            program_id_hash,
-            inputs_des.transaction_hash,
-        ];
-        for _ in 2..NR_CHECKED_INPUTS {
-            checked_inputs.push([0u8; 32]);
-        }
+        
+        let mut checked_inputs: [[u8; 32]; NR_CHECKED_INPUTS] = [[0u8; 32]; NR_CHECKED_INPUTS];
+        checked_inputs[0] = program_id_hash;
+        checked_inputs[1] = inputs_des.transaction_hash;
+
         process_psp_instruction_first::<NR_CHECKED_INPUTS, 17>(
             ctx,
             &proof,
             &public_amount,
             &inputs_des.input_nullifier,
             &inputs_des.output_commitment,
-            &checked_inputs.try_into().unwrap(),
+            &checked_inputs,
             &inputs_des.encrypted_utxos,
             &pool_type,
             &inputs_des.root_index,
@@ -79,7 +77,7 @@ pub mod {{rust-name}} {
         Ok(())
     }
 
-    /// This instruction is the second step of a shielded transaction.
+    /// This instruction is the third step of a shielded transaction.
     /// The proof is verified with the parameters saved in the first transaction.
     /// At successful verification protocol logic is executed.
     pub fn light_instruction_third<'a, 'b, 'c, 'info>(
