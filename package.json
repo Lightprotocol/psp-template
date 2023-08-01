@@ -2,8 +2,8 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-    "test": "light test --projectName {{project-name}} --programAddress {{program-id}}",
-    "build": "light build --name {{project-name}}"
+    "test": "light psp:test --projectName {{project-name}} --programAddress {{program-id}}",
+    "build": "light psp:build --name {{project-name}}"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.28.0",
