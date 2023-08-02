@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::keccak::hash;
+use anchor_lang::solana_program::hash::hash;
 
 pub mod light_utils;
 pub use light_utils::*;
