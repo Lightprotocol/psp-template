@@ -109,6 +109,7 @@ pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
             relayer_recipient_sol: ctx.accounts.relayer_recipient_sol.to_account_info(),
             token_authority: ctx.accounts.token_authority.to_account_info(),
             log_wrapper: ctx.accounts.log_wrapper.to_account_info(),
+            event_merkle_tree: ctx.accounts.event_merkle_tree.to_account_info(),
         };
 
     let mut cpi_ctx = CpiContext::new_with_signer(

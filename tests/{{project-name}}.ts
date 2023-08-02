@@ -2,8 +2,6 @@ import * as anchor from "@coral-xyz/anchor";
 import { assert } from "chai";
 import {
   Utxo,
-  Transaction,
-  TRANSACTION_MERKLE_TREE_KEY,
   TransactionParameters,
   Provider as LightProvider,
   confirmConfig,
@@ -12,9 +10,6 @@ import {
   User,
   ProgramUtxoBalance,
   airdropSol,
-  LOOK_UP_TABLE,
-  verifierProgramStorageProgramId,
-  verifierProgramTwoProgramId,
   ProgramParameters
 } from "@lightprotocol/zk.js";
 import {
@@ -51,8 +46,8 @@ describe("Test {{project-name}}", () => {
   it("Create and Spend Program Utxo ", async () => {
     const wallet = Keypair.generate();
     await airdropSol({
-      provider,
-      lamports: 10_000_000_000,
+      connection: provider.connection,
+      lamports: 1e10,
       recipientPublicKey: wallet.publicKey,
     });
 
@@ -62,26 +57,10 @@ describe("Test {{project-name}}", () => {
       relayerFee: new BN(100000),
       payer: wallet
     });
-    await airdropSol({
-      provider,
-      lamports: 1_000_000_000,
-      recipientPublicKey: Transaction.getRegisteredVerifierPda(
-        TRANSACTION_MERKLE_TREE_KEY,
-        verifierProgramStorageProgramId
-      ),
-    });
-    await airdropSol({
-      provider,
-      lamports: 1_000_000_000,
-      recipientPublicKey: Transaction.getRegisteredVerifierPda(
-        TRANSACTION_MERKLE_TREE_KEY,
-        verifierProgramTwoProgramId
-      ),
-    });
 
     // The light provider is a connection and wallet abstraction.
     // The wallet is used to derive the seed for your shielded keypair with a signature.
-    var lightProvider = await LightProvider.init({ wallet, url: RPC_URL, relayer });
+    var lightProvider = await LightProvider.init({ wallet, url: RPC_URL, relayer, confirmConfig });
     lightProvider.addVerifierProgramPublickeyToLookUpTable(TransactionParameters.getVerifierProgramId(IDL));
 
     const user: User = await User.init({ provider: lightProvider });
