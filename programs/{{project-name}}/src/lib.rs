@@ -1,8 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hash;
 
-pub mod light_utils;
-pub use light_utils::*;
+pub mod psp_accounts;
+pub use psp_accounts::*;
+pub mod auto_generated_accounts;
+pub use auto_generated_accounts::*;
 pub mod processor;
 pub use processor::*;
 pub mod verifying_key;
