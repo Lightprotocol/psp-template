@@ -11,7 +11,7 @@ include "../node_modules/circomlib/circuits/comparators.circom";
     fileName: {{circom-name}},
     config(),
     nrAppUtoxs: 1,
-    publicInputs: [currentSlot]
+    publicInputs: [publicZ]
 }
 
 #[lightTransaction(verifierTwo)]
@@ -19,8 +19,9 @@ template {{circom-name}}() {
     // Defines the data which is saved in the utxo
     #[utxoData]
     {
-        releaseSlot
+        X,
+        Y
     }
-    signal input currentSlot;
-    currentSlot === releaseSlot;
+    signal input publicZ;
+    publicZ === X + Y;
 }

@@ -19,7 +19,6 @@ pub const PROGRAM_ID: &str = "{{program-id}}";
 #[program]
 pub mod {{rust-name}} {
     use light_verifier_sdk::light_transaction::{Amounts, Proof};
-    use solana_program::sysvar;
 
     use super::*;
 
@@ -86,28 +85,9 @@ pub mod {{rust-name}} {
         ctx: Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
-        let current_slot = <Clock as sysvar::Sysvar>::get()?.slot;
-        msg!(
-            "{} > {}",
-            current_slot,
-            u64::from_be_bytes(
-                ctx.accounts.verifier_state.checked_public_inputs[2][24..32]
-                    .try_into()
-                    .unwrap(),
-            )
-        );
-        if current_slot
-            < u64::from_be_bytes(
-                ctx.accounts.verifier_state.checked_public_inputs[2][24..32]
-                    .try_into()
-                    .unwrap(),
-            )
-        {
-            panic!("Escrow still locked");
-        }
         msg!(
             "checked inputs {:?}",
-            ctx.accounts.verifier_state.checked_public_inputs
+            ctx.accounts.verifier_state.checked_public_inputs[2]
         );
         verify_programm_proof(&ctx, &inputs)?;
         cpi_verifier_two(&ctx, &inputs)
