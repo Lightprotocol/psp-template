@@ -70,7 +70,7 @@ describe("Test {{project-name}}", () => {
       assets: [SystemProgram.programId],
       account: user.account,
       amounts: [new BN(1_000_000)],
-      appData: { releaseSlot: new BN(1) },
+      appData: { x: new BN(1), y: new BN(1) },
       appDataIdl: IDL,
       verifierAddress: verifierProgramId,
       assetLookupTable: lightProvider.lookUpTables.assetLookupTable,
@@ -103,15 +103,16 @@ describe("Test {{project-name}}", () => {
 
     const programParameters: ProgramParameters = {
       inputs: {
-        releaseSlot: inputUtxo.appData.releaseSlot,
-        currentSlot: inputUtxo.appData.releaseSlot // for testing we can use the same value
+        x: inputUtxo.appData.x,
+        y: inputUtxo.appData.y,
+        publicZ: inputUtxo.appData.x.add(inputUtxo.appData.y)
       },
       verifierIdl: IDL,
       path: circuitPath
     };
 
     let { txHash } = await user.executeAppUtxo({
-      appUtxo: inputUtxo,
+      appUtxos: [inputUtxo],
       programParameters,
       action: Action.TRANSFER,
     });
