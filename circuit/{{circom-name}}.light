@@ -44,6 +44,7 @@ template {{circom-name}}() {
 *   publicAppVerifier;
 *   transactionHash;
 *   instructionHasher.out;
+*   isAppInUtxo[nAppUtxos][nIns];
 *   
 *  InUtxos:
 *   inAmount[nIns][nInAssets];
