@@ -17,11 +17,49 @@ include "../node_modules/circomlib/circuits/comparators.circom";
 #[lightTransaction(verifierTwo)]
 template {{circom-name}}() {
     // Defines the data which is saved in the utxo
+    // utxoData variables need to be lowerCamelCase
     #[utxoData]
     {
-        X,
-        Y
+        x,
+        y
     }
     signal input publicZ;
-    publicZ === X + Y;
+    publicZ === x + y;
 }
+
+/*
+* Environment Constants:
+*   levels = 18
+*   nIns = 4 (number of in utxos)
+*   nOuts = 4 (number of out utxos)
+*   feeAsset = TruncatedSha256(0)
+*   indexFeeAsset = 0
+*   indexPublicAsset = 1
+*   nAssets = 3
+*   nInAssets = 2
+*   nOutAssets = 2
+* Environment variables:
+*   txIntegrityHash;
+*   transactionVersion;
+*   publicAppVerifier;
+*   transactionHash;
+*   instructionHasher.out;
+*   
+*  InUtxos:
+*   inAmount[nIns][nInAssets];
+*   inPublicKey[nIns];
+*   inBlinding[nIns];
+*   inAppDataHash[nIns];
+*   inPoolType[nIns];
+*   inVerifierPubkey[nIns];
+*   inIndices[nIns][nInAssets][nAssets];
+* OutUtxos:
+*   outputCommitment[nOuts];
+*   outAmount[nOuts][nOutAssets];
+*   outPubkey[nOuts];
+*   outBlinding[nOuts];
+*   outAppDataHash[nOuts];
+*   outIndices[nOuts][nOutAssets][nAssets];
+*   outPoolType[nOuts];
+*   outVerifierPubkey[nOuts];
+*/
