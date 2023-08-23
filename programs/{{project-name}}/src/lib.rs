@@ -7,8 +7,8 @@ pub mod auto_generated_accounts;
 pub use auto_generated_accounts::*;
 pub mod processor;
 pub use processor::*;
-pub mod verifying_key;
-pub use verifying_key::*;
+pub mod verifying_key_{{circom-name}};
+pub use verifying_key_{{circom-name}}::*;
 
 
 declare_id!("{{program-id}}");
@@ -48,7 +48,7 @@ pub mod {{rust-name}} {
         let mut program_id_hash = hash(&ctx.program_id.to_bytes()).to_bytes();
         program_id_hash[0] = 0;
 
-        let mut checked_inputs: [[u8; 32]; { VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }] = [[0u8; 32]; { VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }];
+        let mut checked_inputs: [[u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs] = [[0u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs];
         checked_inputs[0] = program_id_hash;
         checked_inputs[1] = inputs_des.transaction_hash;
 
