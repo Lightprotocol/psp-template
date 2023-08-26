@@ -21,7 +21,20 @@ default = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [placeholders.type]
 type = "string"
-prompt = "Repo type (psp, circom)"
+prompt = "Repo type (psp, circom, psp-circom)"
+default = "psp"
+
+[placeholders.prover-js-version]
+type = "string"
+prompt = "Prover js version"
+
+[placeholders.zk-js-version]
+type = "string"
+prompt = "zk js version"
+
+[placeholders.type-prefix]
+type = "string"
+prompt = "Sub cli type (psp, circom)"
 default = "psp"
 
 [conditional.'type == "psp"']
@@ -29,3 +42,6 @@ ignore = [ "circuits/circuit_circom", "tests_circom", "programs_circom" ]
 
 [conditional.'type == "circom"']
 ignore = [ "circuits/circuit_psp", "tests_psp", "programs_psp" ]
+
+[conditional.'type == "psp-circom"']
+ignore = [ "circuits/circuit_psp", "tests_circom", "programs_circom" ]
