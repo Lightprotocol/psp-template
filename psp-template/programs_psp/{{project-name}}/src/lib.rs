@@ -7,8 +7,8 @@ pub mod auto_generated_accounts;
 pub use auto_generated_accounts::*;
 pub mod processor;
 pub use processor::*;
-pub mod verifying_key;
-pub use verifying_key::*;
+pub mod verifying_key_{{circom-name}};
+pub use verifying_key_{{circom-name}}::*;
 
 
 declare_id!("{{program-id}}");
@@ -23,12 +23,12 @@ pub mod {{rust-name}} {
     use super::*;
 
     /// This instruction is the first step of a shieled transaction.
-    /// It creates and initializes a verifier state account to save state of a verification during
+    /// It creates and initializes a verifier state account to save state of a verification during{ VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }
     /// computation verifying the zero-knowledge proof (ZKP). Additionally, it stores other data
     /// such as leaves, amounts, recipients, nullifiers, etc. to execute the protocol logic
     /// in the last transaction after successful ZKP verification. light_verifier_sdk::light_instruction::LightInstruction2
     pub fn light_instruction_first<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, NR_CHECKED_INPUTS>>,
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, { VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
         let inputs_des: InstructionDataLightInstructionFirst =
@@ -47,12 +47,12 @@ pub mod {{rust-name}} {
         let pool_type = [0u8; 32];
         let mut program_id_hash = hash(&ctx.program_id.to_bytes()).to_bytes();
         program_id_hash[0] = 0;
-        
-        let mut checked_inputs: [[u8; 32]; NR_CHECKED_INPUTS] = [[0u8; 32]; NR_CHECKED_INPUTS];
+
+        let mut checked_inputs: [[u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs] = [[0u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs];
         checked_inputs[0] = program_id_hash;
         checked_inputs[1] = inputs_des.transaction_hash;
 
-        process_psp_instruction_first::<NR_CHECKED_INPUTS, 17>(
+        process_psp_instruction_first::<{ VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }, 17>(
             ctx,
             &proof,
             &public_amount,
@@ -67,7 +67,7 @@ pub mod {{rust-name}} {
     }
 
     pub fn light_instruction_second<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, LightInstructionSecond<'info, NR_CHECKED_INPUTS>>,
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionSecond<'info, { VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
         inputs.chunks(32).enumerate().for_each(|(i, input)| {
@@ -82,7 +82,7 @@ pub mod {{rust-name}} {
     /// The proof is verified with the parameters saved in the first transaction.
     /// At successful verification protocol logic is executed.
     pub fn light_instruction_third<'a, 'b, 'c, 'info>(
-        ctx: Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
+        ctx: Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, { VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }>>,
         inputs: Vec<u8>,
     ) -> Result<()> {
         msg!(
@@ -95,7 +95,7 @@ pub mod {{rust-name}} {
 
     /// Close the verifier state to reclaim rent in case the proofdata is wrong and does not verify.
     pub fn close_verifier_state<'a, 'b, 'c, 'info>(
-        _ctx: Context<'a, 'b, 'c, 'info, CloseVerifierState<'info, NR_CHECKED_INPUTS>>,
+        _ctx: Context<'a, 'b, 'c, 'info, CloseVerifierState<'info, { VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }>>,
     ) -> Result<()> {
         Ok(())
     }
