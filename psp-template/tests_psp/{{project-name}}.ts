@@ -108,7 +108,8 @@ describe("Test {{project-name}}", () => {
         publicZ: inputUtxo.appData.x.add(inputUtxo.appData.y)
       },
       verifierIdl: IDL,
-      path: circuitPath
+      path: circuitPath,
+      circuitName: "{{circom-name-camel-case}}",
     };
 
     let { txHash } = await user.executeAppUtxo({

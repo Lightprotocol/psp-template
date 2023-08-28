@@ -27,7 +27,7 @@ describe("Test {{project-name}}", () => {
       hash: hash,
     };
 
-    const prover = new Prover(IDL, circuitsPath);
+    const prover = new Prover(IDL, circuitsPath, "{{circom-name-camel-case}}");
 
     await prover.addProofInputs(proofInputs);
     await prover.fullProve();
