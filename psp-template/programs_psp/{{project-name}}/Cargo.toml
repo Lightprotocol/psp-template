@@ -18,9 +18,9 @@ default = []
 [dependencies]
 anchor-lang = "0.28.0"
 anchor-spl = "0.28.0"
-merkle_tree_program = { git = "https://github.com/lightprotocol/light-protocol", features = ["cpi"], tag = "v0.3.2" }
-verifier_program_two = { git = "https://github.com/lightprotocol/light-protocol", features = ["cpi"], tag = "v0.3.2" }
-light-macros = "0.1.0"
-light-verifier-sdk = { git = "https://github.com/lightprotocol/light-protocol", tag = "v0.3.2" }
+merkle_tree_program = {{ light-system-programs-version }}
+verifier_program_two = {{ light-system-programs-version }}
+light-macros = {{ light-macros-version }}
+light-verifier-sdk = {{ light-verifier-sdk-version }}
 solana-program = "1.16.4"
 groth16-solana = "0.0.2"
