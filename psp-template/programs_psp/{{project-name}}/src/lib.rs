@@ -89,7 +89,7 @@ pub mod {{rust-name}} {
             "checked inputs {:?}",
             ctx.accounts.verifier_state.checked_public_inputs[2]
         );
-        verify_programm_proof(&ctx, &inputs)?;
+        verify_program_proof(&ctx, &inputs)?;
         cpi_verifier_two(&ctx, &inputs)
     }
 

@@ -131,7 +131,7 @@ pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
     )
 }
 
-pub fn verify_programm_proof<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
+pub fn verify_program_proof<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
     ctx: &'a Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
     inputs: &'a Vec<u8>,
 ) -> Result<()> {
