@@ -32,6 +32,18 @@ prompt = "Prover js version"
 type = "string"
 prompt = "zk js version"
 
+[placeholders.light-system-programs-version]
+type = "string"
+prompt = "On-chain programs version"
+
+[placeholders.light-macros-version]
+type = "string"
+prompt = "light-macros version"
+
+[placeholders.light-verifier-sdk-version]
+type = "string"
+prompt = "Light Verifier SDK version"
+
 [placeholders.type-prefix]
 type = "string"
 prompt = "Sub cli type (psp, circom)"
