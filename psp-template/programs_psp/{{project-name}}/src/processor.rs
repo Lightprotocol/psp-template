@@ -1,70 +1,19 @@
 use crate::verifying_key_{{circom-name}}::VERIFYINGKEY_{{VERIFYING_KEY_NAME}};
-use crate::LightInstructionFirst;
 use crate::LightInstructionThird;
 use anchor_lang::prelude::*;
 use light_macros::pubkey;
-use light_verifier_sdk::light_transaction::Amounts;
 use light_verifier_sdk::light_transaction::Proof;
-use light_verifier_sdk::light_transaction::TransactionInput;
 use light_verifier_sdk::light_transaction::VERIFIER_STATE_SEED;
 use light_verifier_sdk::{
     light_app_transaction::AppTransaction,
-    light_transaction::{Config, Transaction},
+    light_transaction::Config,
 };
 
 #[derive(Clone)]
 pub struct TransactionsConfig;
 impl Config for TransactionsConfig {
-    /// Number of nullifiers to be inserted with the transaction.
-    const NR_NULLIFIERS: usize = 4;
-    /// Number of output utxos.
-    const NR_LEAVES: usize = 4;
     /// ProgramId.
     const ID: Pubkey = pubkey!("{{program-id}}");
-}
-
-pub fn process_psp_instruction_first<
-    'a,
-    'b,
-    'c,
-    'info,
-    const NR_CHECKED_INPUTS: usize,
-    const NR_PUBLIC_INPUTS: usize,
->(
-    ctx: Context<'a, 'b, 'c, 'info, LightInstructionFirst<'info, NR_CHECKED_INPUTS>>,
-    proof: &'a Proof,
-    public_amount: &'a Amounts,
-    input_nullifier: &'a [[u8; 32]; 4],
-    output_commitment: &'a [[u8; 32]; 4],
-    checked_public_inputs: &'a [[u8; 32]; NR_CHECKED_INPUTS],
-    encrypted_utxos: &'a Vec<u8>,
-    pool_type: &'a [u8; 32],
-    root_index: &'a u64,
-    relayer_fee: &'a u64,
-) -> Result<()> {
-    let output_commitment = [
-        [output_commitment[0], output_commitment[1]],
-        [output_commitment[2], output_commitment[3]],
-    ];
-    let input = TransactionInput {
-        message: None,
-        proof,
-        public_amount,
-        nullifiers: input_nullifier,
-        leaves: &output_commitment,
-        encrypted_utxos,
-        relayer_fee: *relayer_fee,
-        merkle_root_index: (*root_index).try_into().unwrap(),
-        pool_type,
-        checked_public_inputs,
-        accounts: None,
-        verifyingkey: &VERIFYINGKEY_{{VERIFYING_KEY_NAME}},
-    };
-    let tx =
-        Transaction::<NR_CHECKED_INPUTS, 2, 4, NR_PUBLIC_INPUTS, TransactionsConfig>::new(input);
-    ctx.accounts.verifier_state.set_inner(tx.into());
-    ctx.accounts.verifier_state.signer = *ctx.accounts.signing_address.key;
-    Ok(())
 }
 
 pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
