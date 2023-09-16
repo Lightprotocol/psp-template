@@ -37,16 +37,7 @@ pub mod {{rust-name}} {
             InstructionDataLightInstructionFirst::try_deserialize_unchecked(
                 &mut [vec![0u8; 8], inputs].concat().as_slice(),
             )?;
-        let proof = Proof {
-            a: [0u8; 64],
-            b: [0u8; 128],
-            c: [0u8; 64],
-        };
-        let public_amount = Amounts {
-            sol: inputs_des.public_amount_sol,
-            spl: inputs_des.public_amount_spl,
-        };
-        let pool_type = [0u8; 32];
+
         let mut program_id_hash = hash(&ctx.program_id.to_bytes()).to_bytes();
         program_id_hash[0] = 0;
 
