@@ -1,5 +1,9 @@
+use std::marker::PhantomData;
+
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hash;
+
+use light_verifier_sdk::{light_transaction::{Amounts, Proof}, state::VerifierState10Ins};
 
 pub mod psp_accounts;
 pub use psp_accounts::*;
@@ -18,8 +22,6 @@ pub const PROGRAM_ID: &str = "{{program-id}}";
 
 #[program]
 pub mod {{rust-name}} {
-    use light_verifier_sdk::light_transaction::{Amounts, Proof};
-
     use super::*;
 
     /// This instruction is the first step of a shieled transaction.
@@ -35,35 +37,38 @@ pub mod {{rust-name}} {
             InstructionDataLightInstructionFirst::try_deserialize_unchecked(
                 &mut [vec![0u8; 8], inputs].concat().as_slice(),
             )?;
-        let proof = Proof {
-            a: [0u8; 64],
-            b: [0u8; 128],
-            c: [0u8; 64],
-        };
-        let public_amount = Amounts {
-            sol: inputs_des.public_amount_sol,
-            spl: inputs_des.public_amount_spl,
-        };
-        let pool_type = [0u8; 32];
+
         let mut program_id_hash = hash(&ctx.program_id.to_bytes()).to_bytes();
         program_id_hash[0] = 0;
 
-        let mut checked_inputs: [[u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs] = [[0u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs];
-        checked_inputs[0] = program_id_hash;
-        checked_inputs[1] = inputs_des.transaction_hash;
+        let mut checked_public_inputs: [[u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs] = [[0u8; 32]; VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs];
+        checked_public_inputs[0] = program_id_hash;
+        checked_public_inputs[1] = inputs_des.transaction_hash;
 
-        process_psp_instruction_first::<{ VERIFYINGKEY_{{VERIFYING_KEY_NAME}}.nr_pubinputs }, 17>(
-            ctx,
-            &proof,
-            &public_amount,
-            &inputs_des.input_nullifier,
-            &inputs_des.output_commitment,
-            &checked_inputs,
-            &inputs_des.encrypted_utxos,
-            &pool_type,
-            &inputs_des.root_index,
-            &inputs_des.relayer_fee,
-        )
+        let state = VerifierState10Ins {
+            merkle_root_index: inputs_des.root_index,
+            signer: Pubkey::from([0u8; 32]),
+            nullifiers: inputs_des.input_nullifier.to_vec(),
+            leaves: inputs_des.output_commitment.to_vec(),
+            public_amount_spl: inputs_des.public_amount_spl,
+            public_amount_sol: inputs_des.public_amount_sol,
+            mint_pubkey: [0u8; 32],
+            merkle_root: [0u8; 32],
+            tx_integrity_hash: [0u8; 32],
+            relayer_fee: inputs_des.relayer_fee,
+            encrypted_utxos: inputs_des.encrypted_utxos,
+            checked_public_inputs,
+            proof_a: [0u8; 64],
+            proof_b: [0u8; 128],
+            proof_c: [0u8; 64],
+            transaction_hash: [0u8; 32],
+            e_phantom: PhantomData,
+        };
+
+        ctx.accounts.verifier_state.set_inner(state);
+        ctx.accounts.verifier_state.signer = *ctx.accounts.signing_address.key;
+
+        Ok(())
     }
 
     pub fn light_instruction_second<'a, 'b, 'c, 'info>(
