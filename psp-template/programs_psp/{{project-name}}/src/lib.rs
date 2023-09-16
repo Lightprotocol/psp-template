@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hash;
 
-use light_verifier_sdk::{light_transaction::{Amounts, Proof}, state::VerifierState10Ins};
+use light_verifier_sdk::state::VerifierState10Ins;
 
 pub mod psp_accounts;
 pub use psp_accounts::*;
