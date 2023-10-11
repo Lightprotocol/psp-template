@@ -16,7 +16,7 @@ impl Config for TransactionsConfig {
     const ID: Pubkey = pubkey!("{{program-id}}");
 }
 
-pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
+pub fn cpi_system_verifier<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
     ctx: &'a Context<'a, 'b, 'c, 'info, LightInstructionThird<'info, NR_CHECKED_INPUTS>>,
     inputs: &'a Vec<u8>,
 ) -> Result<()> {
@@ -40,8 +40,8 @@ pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
     let cpi_seed = &[seed, domain_separation_seed, &bump[..]];
     let final_seed = &[&cpi_seed[..]];
 
-    let accounts: verifier_program_two::cpi::accounts::LightInstruction<'info> =
-        verifier_program_two::cpi::accounts::LightInstruction {
+    let accounts: light_psp4in4out_app_storage::cpi::accounts::LightInstruction<'info> =
+        light_psp4in4out_app_storage::cpi::accounts::LightInstruction {
             verifier_state: ctx.accounts.verifier_state.to_account_info(),
             signing_address: ctx.accounts.signing_address.to_account_info(),
             authority: ctx.accounts.authority.to_account_info(),
@@ -68,7 +68,7 @@ pub fn cpi_verifier_two<'a, 'b, 'c, 'info, const NR_CHECKED_INPUTS: usize>(
     );
     cpi_ctx = cpi_ctx.with_remaining_accounts(ctx.remaining_accounts.to_vec());
 
-    verifier_program_two::cpi::shielded_transfer_inputs(
+    light_psp4in4out_app_storage::cpi::shielded_transfer_inputs(
         cpi_ctx,
         proof_verifier.a,
         proof_verifier.b,

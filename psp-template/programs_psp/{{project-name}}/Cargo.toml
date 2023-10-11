@@ -18,8 +18,8 @@ default = []
 [dependencies]
 anchor-lang = "0.28.0"
 anchor-spl = "0.28.0"
-merkle_tree_program = {{ light-system-programs-version }}
-verifier_program_two = {{ light-system-programs-version }}
+light-merkle-tree-program = {{ light-merkle-tree-program-version }}
+{{ light-system-program }} = {{ light-system-program-version }}
 light-macros = {{ light-macros-version }}
 light-verifier-sdk = {{ light-verifier-sdk-version }}
 solana-program = "1.16.4"

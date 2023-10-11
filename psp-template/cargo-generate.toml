@@ -32,9 +32,17 @@ prompt = "Prover js version"
 type = "string"
 prompt = "zk js version"
 
-[placeholders.light-system-programs-version]
+[placeholders.light-merkle-tree-program-version]
 type = "string"
-prompt = "On-chain programs version"
+prompt = "Merkle tree program version"
+
+[placeholders.light-system-program-version]
+type = "string"
+prompt = "Native PSP version"
+
+[placeholders.light-system-program]
+type = "string"
+prompt = "Native PSP"
 
 [placeholders.light-macros-version]
 type = "string"
