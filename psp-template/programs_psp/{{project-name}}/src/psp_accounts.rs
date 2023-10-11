@@ -1,8 +1,7 @@
 use crate::processor::TransactionsConfig;
 use anchor_lang::prelude::*;
 use light_macros::light_verifier_accounts;
-use light_merkle_tree_program::program::LightMerkleTreeProgram;
-use light_psp_4in4out_app_storage::{self, program::LightPsp4in4outAppStorage};
+use light_psp4in4out_app_storage::{self, program::LightPsp4in4outAppStorage};
 use light_verifier_sdk::{light_transaction::VERIFIER_STATE_SEED, state::VerifierState10Ins};
 
 // Send and stores data.
