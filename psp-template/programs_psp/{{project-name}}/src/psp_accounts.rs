@@ -2,7 +2,7 @@ use crate::processor::TransactionsConfig;
 use anchor_lang::prelude::*;
 use light_macros::light_verifier_accounts;
 use light_merkle_tree_program::program::LightMerkleTreeProgram;
-use light_psp_4in4out::{self, program::LightPsp4in4out};
+use light_psp_4in4out_app_storage::{self, program::LightPsp4in4outAppStorage};
 use light_verifier_sdk::{light_transaction::VERIFIER_STATE_SEED, state::VerifierState10Ins};
 
 // Send and stores data.
@@ -43,13 +43,13 @@ pub struct LightInstructionSecond<'info, const NR_CHECKED_INPUTS: usize> {
     sol,
     spl,
     signing_address=verifier_state.signer,
-    verifier_program_id=LightPsp4in4out::id()
+    verifier_program_id=LightPsp4in4outAppStorage::id()
 )]
 #[derive(Accounts)]
 pub struct LightInstructionThird<'info, const NR_CHECKED_INPUTS: usize> {
     #[account(mut, seeds = [&signing_address.key().to_bytes(), VERIFIER_STATE_SEED], bump, close=signing_address )]
     pub verifier_state: Account<'info, VerifierState10Ins<NR_CHECKED_INPUTS, TransactionsConfig>>,
-    pub verifier_program: Program<'info, LightPsp4in4out>,
+    pub verifier_program: Program<'info, LightPsp4in4outAppStorage>,
 }
 
 #[derive(Debug)]

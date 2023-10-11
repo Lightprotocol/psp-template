@@ -36,9 +36,13 @@ prompt = "zk js version"
 type = "string"
 prompt = "Merkle tree program version"
 
-[placeholders.light-psp4in4out-version]
+[placeholders.light-system-program-version]
 type = "string"
-prompt = "Native PSP (4 inputs, 4 outputs) version"
+prompt = "Native PSP version"
+
+[placeholders.light-system-program]
+type = "string"
+prompt = "Native PSP"
 
 [placeholders.light-macros-version]
 type = "string"

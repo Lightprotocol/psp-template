@@ -95,7 +95,7 @@ pub mod {{rust-name}} {
             ctx.accounts.verifier_state.checked_public_inputs[2]
         );
         verify_program_proof(&ctx, &inputs)?;
-        cpi_verifier_two(&ctx, &inputs)
+        cpi_system_verifier(&ctx, &inputs)
     }
 
     /// Close the verifier state to reclaim rent in case the proofdata is wrong and does not verify.
