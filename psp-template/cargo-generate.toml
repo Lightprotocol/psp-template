@@ -52,6 +52,10 @@ prompt = "light-macros version"
 type = "string"
 prompt = "Light Verifier SDK version"
 
+[placeholders.circuit-lib-circom-version]
+type = "string"
+prompt = "Circuit lib circom version"
+
 [placeholders.type-prefix]
 type = "string"
 prompt = "Sub cli type (psp, circom)"
