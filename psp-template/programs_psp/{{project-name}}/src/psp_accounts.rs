@@ -1,8 +1,7 @@
-use crate::processor::TransactionsConfig;
 use anchor_lang::prelude::*;
 use light_macros::light_verifier_accounts;
 use light_psp4in4out_app_storage::{self, program::LightPsp4in4outAppStorage};
-use light_verifier_sdk::{light_transaction::VERIFIER_STATE_SEED, state::VerifierState10Ins};
+use light_verifier_sdk::light_transaction::VERIFIER_STATE_SEED;
 
 // Send and stores data.
 #[derive(Accounts)]
@@ -12,7 +11,7 @@ pub struct LightInstructionFirst<'info, const NR_CHECKED_INPUTS: usize> {
     pub signing_address: Signer<'info>,
     pub system_program: Program<'info, System>,
     #[account(init, seeds = [&signing_address.key().to_bytes(), VERIFIER_STATE_SEED], bump, space= 3000, payer = signing_address )]
-    pub verifier_state: Account<'info, VerifierState10Ins<NR_CHECKED_INPUTS, TransactionsConfig>>,
+    pub verifier_state: AccountLoader<'info, VerifierState>,
 }
 
 #[derive(Debug)]
@@ -34,20 +33,20 @@ pub struct LightInstructionSecond<'info, const NR_CHECKED_INPUTS: usize> {
     #[account(mut)]
     pub signing_address: Signer<'info>,
     #[account(mut, seeds = [&signing_address.key().to_bytes(), VERIFIER_STATE_SEED], bump)]
-    pub verifier_state: Account<'info, VerifierState10Ins<NR_CHECKED_INPUTS, TransactionsConfig>>,
+    pub verifier_state: AccountLoader<'info, VerifierState>,
 }
 
 /// Executes light transaction with state created in the first instruction.
 #[light_verifier_accounts(
     sol,
     spl,
-    signing_address=verifier_state.signer,
+    signing_address=verifier_state.load().unwrap().signer,
     verifier_program_id=LightPsp4in4outAppStorage::id()
 )]
 #[derive(Accounts)]
 pub struct LightInstructionThird<'info, const NR_CHECKED_INPUTS: usize> {
     #[account(mut, seeds = [&signing_address.key().to_bytes(), VERIFIER_STATE_SEED], bump, close=signing_address )]
-    pub verifier_state: Account<'info, VerifierState10Ins<NR_CHECKED_INPUTS, TransactionsConfig>>,
+    pub verifier_state: AccountLoader<'info, VerifierState>,
     pub verifier_program: Program<'info, LightPsp4in4outAppStorage>,
 }
 
@@ -64,8 +63,18 @@ pub struct InstructionDataLightInstructionThird {
 
 #[derive(Accounts)]
 pub struct CloseVerifierState<'info, const NR_CHECKED_INPUTS: usize> {
-    #[account(mut, address=verifier_state.signer)]
+    #[account(mut, address=verifier_state.load().unwrap().signer)]
     pub signing_address: Signer<'info>,
     #[account(mut, seeds = [&signing_address.key().to_bytes(), VERIFIER_STATE_SEED], bump, close=signing_address )]
-    pub verifier_state: Account<'info, VerifierState10Ins<NR_CHECKED_INPUTS, TransactionsConfig>>,
+    pub verifier_state: AccountLoader<'info, VerifierState>,
+}
+
+#[account(zero_copy)]
+pub struct VerifierState {
+    pub signer: Pubkey,
+    pub verifier_state_data: [u8; 1024], //VerifierState,
+    // 2 + PublicZ (VerifierAddress, TransactionHash, PublicZ)
+    // Verifier address, and transaction hash are mandatory psp public inputs
+    // Verifier address is hashed and truncated to fit the field size of the circuit
+    pub checked_public_inputs: [[u8; 32]; 3],
 }
